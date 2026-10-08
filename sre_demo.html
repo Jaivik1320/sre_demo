@@ -1,0 +1,1066 @@
+<title>OpsPulse — SRE Operations Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #1f2937;
+  --bg4: #263244;
+  --border: #30363d;
+  --border2: #3d4f6b;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #6e7681;
+  --accent: #2563eb;
+  --accent2: #3b82f6;
+  --accent-glow: rgba(37,99,235,0.15);
+  --green: #22c55e;
+  --green-bg: rgba(34,197,94,0.1);
+  --amber: #f59e0b;
+  --amber-bg: rgba(245,158,11,0.1);
+  --red: #ef4444;
+  --red-bg: rgba(239,68,68,0.1);
+  --purple: #a855f7;
+  --purple-bg: rgba(168,85,247,0.1);
+  --cyan: #06b6d4;
+  --cyan-bg: rgba(6,182,212,0.1);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  min-height: 100vh;
+}
+code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Layout */
+.app { display: flex; height: 100vh; overflow: hidden; }
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.logo {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo-text { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; }
+.logo-sub { font-size: 10px; color: var(--text3); margin-top: 1px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+.nav { padding: 12px 8px; flex: 1; }
+.nav-section { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 8px 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 8px; border-radius: 6px;
+  cursor: pointer; color: var(--text2);
+  font-size: 13px; font-weight: 500;
+  transition: all 0.15s; margin-bottom: 1px;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--accent-glow); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); }
+.nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+.nav-badge {
+  margin-left: auto; background: var(--red); color: #fff;
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+}
+.nav-badge.amber { background: var(--amber); }
+
+.status-bar {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text3);
+}
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 6px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+.main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  position: sticky; top: 0; z-index: 10;
+}
+.page-title { font-size: 16px; font-weight: 600; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.env-badge {
+  font-size: 11px; padding: 3px 10px; border-radius: 20px;
+  font-weight: 600; letter-spacing: 0.3px;
+}
+.env-badge.prod { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.env-badge.staging { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+.time-display { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+
+.content { padding: 24px; flex: 1; }
+
+/* Pages */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.card-title {
+  font-size: 12px; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.6px;
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.card-title .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* Grid layouts */
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+.grid-cols { display: grid; gap: 16px; }
+
+/* KPI tiles */
+.kpi { padding: 18px 20px; }
+.kpi-label { font-size: 11px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 28px; font-weight: 700; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+.kpi-sub { font-size: 11px; color: var(--text3); }
+.kpi-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 10px; margin-top: 6px; }
+.kpi-badge.up { background: var(--green-bg); color: var(--green); }
+.kpi-badge.down { background: var(--red-bg); color: var(--red); }
+.kpi-badge.warn { background: var(--amber-bg); color: var(--amber); }
+
+/* Status indicators */
+.status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+.status.healthy { background: var(--green-bg); color: var(--green); }
+.status.degraded { background: var(--amber-bg); color: var(--amber); }
+.status.incident { background: var(--red-bg); color: var(--red); }
+.status.unknown { background: var(--bg3); color: var(--text3); }
+.status::before { content: '●'; font-size: 8px; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; }
+th { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); vertical-align: middle; }
+td:first-child { color: var(--text); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none; transition: all 0.15s; font-family: inherit;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-outline { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--bg3); color: var(--text); }
+.btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+
+/* Section headers */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.section-title { font-size: 14px; font-weight: 600; }
+.section-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* Sparkline bar */
+.sparkbar { display: flex; align-items: flex-end; gap: 2px; height: 32px; }
+.sparkbar-col { flex: 1; background: var(--accent); border-radius: 2px; opacity: 0.7; transition: opacity 0.2s; }
+.sparkbar-col:hover { opacity: 1; }
+
+/* Progress bar */
+.progress-track { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s; }
+
+/* SLO gauge */
+.slo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.slo-name { font-size: 12px; color: var(--text2); width: 120px; flex-shrink: 0; }
+.slo-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.slo-fill { height: 100%; border-radius: 3px; }
+.slo-val { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; width: 50px; text-align: right; flex-shrink: 0; }
+.slo-budget { font-size: 10px; color: var(--text3); width: 70px; text-align: right; flex-shrink: 0; }
+
+/* Log stream */
+.log-line { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 10px; }
+.log-ts { color: var(--text3); flex-shrink: 0; }
+.log-level { flex-shrink: 0; font-weight: 600; width: 40px; }
+.log-level.INFO { color: var(--cyan); }
+.log-level.WARN { color: var(--amber); }
+.log-level.ERROR { color: var(--red); }
+.log-msg { color: var(--text2); }
+
+/* AI Chat */
+.chat-wrap { display: flex; flex-direction: column; height: 420px; }
+.chat-history { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 4px 0; }
+.chat-msg { display: flex; gap: 10px; align-items: flex-start; }
+.chat-msg.user { flex-direction: row-reverse; }
+.chat-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.chat-avatar.ai { background: var(--accent); color: #fff; }
+.chat-avatar.user { background: var(--purple-bg); color: var(--purple); border: 1px solid rgba(168,85,247,0.3); }
+.chat-bubble {
+  max-width: 80%; background: var(--bg3); border-radius: 10px;
+  padding: 10px 14px; font-size: 13px; line-height: 1.55; color: var(--text);
+  border: 1px solid var(--border);
+}
+.chat-msg.user .chat-bubble { background: var(--accent-glow); border-color: rgba(59,130,246,0.3); }
+.chat-input-row { display: flex; gap: 10px; margin-top: 12px; }
+.chat-input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; color: var(--text); font-family: inherit;
+  outline: none;
+}
+.chat-input:focus { border-color: var(--accent2); }
+.quick-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.chip {
+  font-size: 11px; padding: 4px 10px; border-radius: 20px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer; transition: all 0.15s;
+}
+.chip:hover { border-color: var(--accent2); color: var(--accent2); }
+
+/* Runbook */
+.rb-step { display: flex; gap: 14px; margin-bottom: 16px; }
+.rb-num {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.rb-body { flex: 1; }
+.rb-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.rb-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.rb-cmd {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 12px; margin-top: 8px; color: var(--cyan);
+  position: relative;
+}
+
+/* Alert banner */
+.alert-banner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+  font-size: 13px;
+}
+.alert-banner.incident { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.3); color: var(--text); }
+.alert-banner.warn { background: var(--amber-bg); border: 1px solid rgba(245,158,11,0.3); color: var(--text); }
+.alert-banner.info { background: var(--cyan-bg); border: 1px solid rgba(6,182,212,0.3); color: var(--text); }
+.alert-icon { font-size: 18px; flex-shrink: 0; }
+.alert-text { flex: 1; }
+.alert-title { font-weight: 600; }
+.alert-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* Heatmap */
+.heatmap { display: grid; gap: 3px; }
+.heatmap-cell {
+  height: 20px; border-radius: 3px; cursor: pointer;
+  transition: opacity 0.15s; position: relative;
+}
+.heatmap-label { font-size: 10px; color: var(--text3); padding: 2px 0; }
+
+/* Tag */
+.tag { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 600; }
+.tag.k8s { background: var(--cyan-bg); color: var(--cyan); }
+.tag.azure { background: var(--accent-glow); color: var(--accent2); }
+.tag.ai { background: var(--purple-bg); color: var(--purple); }
+.tag.alert { background: var(--red-bg); color: var(--red); }
+.tag.ok { background: var(--green-bg); color: var(--green); }
+
+/* Incident timeline */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 14px; position: relative; padding-bottom: 16px; }
+.tl-item::before {
+  content: ''; position: absolute; left: 7px; top: 18px;
+  width: 1px; height: calc(100% - 18px); background: var(--border);
+}
+.tl-item:last-child::before { display: none; }
+.tl-dot { width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; }
+.tl-body { flex: 1; }
+.tl-time { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+.tl-event { font-size: 13px; color: var(--text); margin-top: 2px; }
+.tl-actor { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Pill tabs */
+.pill-tabs { display: flex; gap: 4px; background: var(--bg3); padding: 4px; border-radius: 8px; width: fit-content; margin-bottom: 16px; }
+.pill-tab { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text2); border: none; background: none; font-family: inherit; transition: all 0.15s; }
+.pill-tab.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+/* Metric chart (SVG) */
+.metric-svg { width: 100%; overflow: visible; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* Responsive */
+@media (max-width: 700px) {
+  .sidebar { display: none; }
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <div class="logo-icon">📡</div>
+        <div>
+          <div class="logo-text">OpsPulse</div>
+          <div class="logo-sub">SRE Operations Center</div>
+        </div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Operations</div>
+      <button class="nav-item active" data-page="dashboard"><span class="icon">⬡</span> Dashboard</button>
+      <button class="nav-item" data-page="incidents"><span class="icon">🔥</span> Incidents <span class="nav-badge">2</span></button>
+      <button class="nav-item" data-page="services"><span class="icon">🧩</span> Services</button>
+      <button class="nav-item" data-page="slo"><span class="icon">📊</span> SLOs & Budgets</button>
+      <div class="nav-section">Automation</div>
+      <button class="nav-item" data-page="runbooks"><span class="icon">📋</span> AI Runbooks <span class="nav-badge amber">1</span></button>
+      <button class="nav-item" data-page="logs"><span class="icon">📜</span> Log Stream</button>
+      <button class="nav-item" data-page="ai"><span class="icon">🤖</span> AI Ops Assistant</button>
+    </nav>
+    <div class="status-bar">
+      <span class="status-dot"></span>All systems monitored
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">Operations Dashboard</div>
+      <div class="topbar-right">
+        <span class="env-badge prod">PRODUCTION</span>
+        <span class="time-display" id="clock">--:--:-- UTC</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="alert-banner incident">
+          <span class="alert-icon">🔴</span>
+          <div class="alert-text">
+            <div class="alert-title">P1 INCIDENT ACTIVE — HL7 Message Processor latency spike (AKS East)</div>
+            <div class="alert-sub">Opened 14 min ago · INC-2847 · Assigned to on-call SRE</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="goTo('incidents')">View →</button>
+        </div>
+
+        <div class="grid-4" style="margin-bottom:16px">
+          <div class="card kpi">
+            <div class="kpi-label">Availability (30d)</div>
+            <div class="kpi-value" style="color:var(--green)">99.94%</div>
+            <div class="kpi-sub">SLO target: 99.9%</div>
+            <div class="kpi-badge up">▲ On target</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Active Incidents</div>
+            <div class="kpi-value" style="color:var(--red)">2</div>
+            <div class="kpi-sub">1 P1 · 1 P2</div>
+            <div class="kpi-badge down">▼ Need attention</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Deployments Today</div>
+            <div class="kpi-value" style="color:var(--accent2)">7</div>
+            <div class="kpi-sub">6 success · 1 rolled back</div>
+            <div class="kpi-badge warn">⚠ 1 rollback</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">Error Budget</div>
+            <div class="kpi-value" style="color:var(--amber)">31%</div>
+            <div class="kpi-sub">HL7 Processor remaining</div>
+            <div class="kpi-badge warn">▼ Burning fast</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>Service Health</div>
+            <table>
+              <thead><tr><th>Service</th><th>Status</th><th>Latency p99</th><th>Error Rate</th></tr></thead>
+              <tbody>
+                <tr><td>HL7 Message Processor <span class="tag k8s">AKS</span></td><td><span class="status degraded">Degraded</span></td><td style="color:var(--amber);font-weight:600">1,240ms</td><td style="color:var(--amber)">2.1%</td></tr>
+                <tr><td>Patient Data API <span class="tag azure">Azure</span></td><td><span class="status healthy">Healthy</span></td><td>84ms</td><td>0.02%</td></tr>
+                <tr><td>Scheduling Engine <span class="tag k8s">AKS</span></td><td><span class="status healthy">Healthy</span></td><td>112ms</td><td>0.08%</td></tr>
+                <tr><td>Auth Service <span class="tag azure">Azure</span></td><td><span class="status healthy">Healthy</span></td><td>31ms</td><td>0.01%</td></tr>
+                <tr><td>Vendor Integration Gateway</td><td><span class="status incident">Incident</span></td><td style="color:var(--red);font-weight:600">4,810ms</td><td style="color:var(--red)">8.4%</td></tr>
+                <tr><td>Reporting Service</td><td><span class="status healthy">Healthy</span></td><td>210ms</td><td>0.05%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--green)"></span>Request Volume (24h)</div>
+            <canvas id="reqCanvas" style="width:100%;height:140px"></canvas>
+            <div style="display:flex;gap:16px;margin-top:10px">
+              <div><div style="font-size:11px;color:var(--text3)">Peak RPS</div><div style="font-weight:700;color:var(--accent2)">2,840</div></div>
+              <div><div style="font-size:11px;color:var(--text3)">Avg RPS</div><div style="font-weight:700">1,490</div></div>
+              <div><div style="font-size:11px;color:var(--text3)">Total Requests</div><div style="font-weight:700">128.5M</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot" style="background:var(--amber)"></span>Recent Alerts</div>
+          <table>
+            <thead><tr><th>Time</th><th>Severity</th><th>Alert</th><th>Service</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td class="mono" style="font-size:11px;color:var(--text3)">14:32 UTC</td><td><span class="status incident">P1</span></td><td>HL7 latency > 1000ms (SLO breach imminent)</td><td>HL7 Processor</td><td><button class="btn btn-outline btn-sm" onclick="goTo('incidents')">Investigate</button></td></tr>
+              <tr><td class="mono" style="font-size:11px;color:var(--text3)">14:18 UTC</td><td><span class="status incident">P2</span></td><td>Vendor Integration timeout rate 8.4%</td><td>Vendor Gateway</td><td><button class="btn btn-outline btn-sm" onclick="goTo('incidents')">Investigate</button></td></tr>
+              <tr><td class="mono" style="font-size:11px;color:var(--text3)">13:55 UTC</td><td><span class="status degraded">P3</span></td><td>Error budget burn rate 3x nominal (HL7)</td><td>HL7 Processor</td><td><button class="btn btn-outline btn-sm">Acknowledged</button></td></tr>
+              <tr><td class="mono" style="font-size:11px;color:var(--text3)">11:20 UTC</td><td><span class="status healthy">P4</span></td><td>Deployment rollback: scheduling-engine v2.4.1</td><td>Scheduling Engine</td><td><button class="btn btn-outline btn-sm">Resolved</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- INCIDENTS -->
+      <div class="page" id="page-incidents">
+        <div class="alert-banner incident" style="margin-bottom:20px">
+          <span class="alert-icon">🚨</span>
+          <div class="alert-text">
+            <div class="alert-title">INC-2847 · P1 · HL7 Message Processor — Latency Spike</div>
+            <div class="alert-sub">Duration: 17 min · Impact: ~3,200 HL7 messages delayed · Assigned: On-call SRE</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="goTo('ai')">Ask AI →</button>
+            <button class="btn btn-primary btn-sm" id="resolveBtn">Resolve Incident</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-title">Incident Timeline — INC-2847</div>
+            <div class="timeline" id="incTimeline">
+              <div class="tl-item">
+                <div class="tl-dot" style="background:var(--red)"></div>
+                <div class="tl-body">
+                  <div class="tl-time">14:32 UTC</div>
+                  <div class="tl-event">🔴 P1 Incident auto-declared — HL7 latency p99 crossed 1,000ms threshold</div>
+                  <div class="tl-actor">PagerDuty → Datadog alert DA-8821</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot" style="background:var(--amber)"></div>
+                <div class="tl-body">
+                  <div class="tl-time">14:34 UTC</div>
+                  <div class="tl-event">⚠️ On-call SRE acknowledged alert, started investigation</div>
+                  <div class="tl-actor">Jaivik Parekh</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot" style="background:var(--accent2)"></div>
+                <div class="tl-body">
+                  <div class="tl-time">14:36 UTC</div>
+                  <div class="tl-event">🤖 AI Ops queried — identified pod CPU saturation on hl7-processor-east-3</div>
+                  <div class="tl-actor">OpsPulse AI Assistant</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot" style="background:var(--purple)"></div>
+                <div class="tl-body">
+                  <div class="tl-time">14:38 UTC</div>
+                  <div class="tl-event">📋 AI Runbook triggered — Kubernetes pod restart sequence initiated</div>
+                  <div class="tl-actor">Automated via runbook RB-114</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot" style="background:var(--text3)"></div>
+                <div class="tl-body">
+                  <div class="tl-time">14:47 UTC</div>
+                  <div class="tl-event">🔍 Monitoring latency recovery — partial improvement to 840ms</div>
+                  <div class="tl-actor">Jaivik Parekh</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Impact & Blast Radius</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+              <div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">HL7 Messages Queued</div>
+                <div style="font-size:24px;font-weight:700;color:var(--amber)">3,214</div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Affected Facilities</div>
+                <div style="font-size:24px;font-weight:700;color:var(--red)">48</div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:6px">SLO Error Budget Consumed (this incident)</div>
+                <div class="progress-track">
+                  <div class="progress-fill" style="width:69%;background:var(--amber)"></div>
+                </div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px">69% of monthly budget burned</div>
+              </div>
+            </div>
+            <div class="card-title">Suspected Root Cause</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.6">
+              AI analysis identified <strong style="color:var(--text)">pod CPU saturation</strong> on <code style="color:var(--cyan);font-size:11px">hl7-processor-east-3</code> following a config change deployed at 14:20 UTC. Memory pressure causing GC pauses, spiking message processing latency. Correlates with 3x error budget burn rate observed at 13:55.
+            </div>
+            <div style="margin-top:12px">
+              <button class="btn btn-primary" onclick="goTo('runbooks')">Open Runbook →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">All Active Incidents</div>
+            </div>
+            <button class="btn btn-outline btn-sm">+ Declare Incident</button>
+          </div>
+          <table>
+            <thead><tr><th>ID</th><th>Severity</th><th>Title</th><th>Duration</th><th>Assignee</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr style="background:rgba(239,68,68,0.04)"><td class="mono" style="font-size:11px">INC-2847</td><td><span class="status incident">P1</span></td><td>HL7 Processor latency spike — AKS East pod saturation</td><td style="color:var(--red)">17m</td><td>On-call SRE</td><td><span class="tag alert">Active</span></td></tr>
+              <tr><td class="mono" style="font-size:11px">INC-2846</td><td><span class="status degraded">P2</span></td><td>Vendor Integration Gateway timeout rate elevated</td><td style="color:var(--amber)">1h 4m</td><td>App Ops Team</td><td><span class="tag alert">Investigating</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SERVICES -->
+      <div class="page" id="page-services">
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:600">HL7 Message Processor</div>
+              <span class="status degraded">Degraded</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px"><span class="tag k8s">AKS</span><span class="tag azure">East US</span></div>
+            <div style="display:flex;gap:16px;margin-bottom:12px">
+              <div><div style="font-size:10px;color:var(--text3)">Replicas</div><div style="font-weight:700;color:var(--amber)">3/5</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">CPU</div><div style="font-weight:700;color:var(--red)">94%</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">Memory</div><div style="font-weight:700;color:var(--amber)">78%</div></div>
+            </div>
+            <button class="btn btn-outline btn-sm" style="width:100%" onclick="goTo('runbooks')">View Runbook</button>
+          </div>
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:600">Patient Data API</div>
+              <span class="status healthy">Healthy</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px"><span class="tag azure">Azure App Service</span></div>
+            <div style="display:flex;gap:16px;margin-bottom:12px">
+              <div><div style="font-size:10px;color:var(--text3)">Instances</div><div style="font-weight:700;color:var(--green)">4/4</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">CPU</div><div style="font-weight:700">28%</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">Memory</div><div style="font-weight:700">41%</div></div>
+            </div>
+            <button class="btn btn-outline btn-sm" style="width:100%">View Details</button>
+          </div>
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:600">Scheduling Engine</div>
+              <span class="status healthy">Healthy</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px"><span class="tag k8s">AKS</span><span class="tag azure">Canada Central</span></div>
+            <div style="display:flex;gap:16px;margin-bottom:12px">
+              <div><div style="font-size:10px;color:var(--text3)">Replicas</div><div style="font-weight:700;color:var(--green)">3/3</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">CPU</div><div style="font-weight:700">35%</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">Memory</div><div style="font-weight:700">52%</div></div>
+            </div>
+            <button class="btn btn-outline btn-sm" style="width:100%">View Details</button>
+          </div>
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:600">Vendor Integration Gateway</div>
+              <span class="status incident">Incident</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px"><span class="tag azure">Azure</span></div>
+            <div style="display:flex;gap:16px;margin-bottom:12px">
+              <div><div style="font-size:10px;color:var(--text3)">Instances</div><div style="font-weight:700;color:var(--red)">2/4</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">CPU</div><div style="font-weight:700;color:var(--red)">87%</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">Memory</div><div style="font-weight:700;color:var(--red)">91%</div></div>
+            </div>
+            <button class="btn btn-danger btn-sm" style="width:100%" onclick="goTo('incidents')">Active Incident</button>
+          </div>
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:600">Auth Service</div>
+              <span class="status healthy">Healthy</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px"><span class="tag azure">Azure AD B2C</span></div>
+            <div style="display:flex;gap:16px;margin-bottom:12px">
+              <div><div style="font-size:10px;color:var(--text3)">Instances</div><div style="font-weight:700;color:var(--green)">6/6</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">CPU</div><div style="font-weight:700">12%</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">Memory</div><div style="font-weight:700">29%</div></div>
+            </div>
+            <button class="btn btn-outline btn-sm" style="width:100%">View Details</button>
+          </div>
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-size:13px;font-weight:600">Reporting Service</div>
+              <span class="status healthy">Healthy</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px"><span class="tag azure">Azure Functions</span></div>
+            <div style="display:flex;gap:16px;margin-bottom:12px">
+              <div><div style="font-size:10px;color:var(--text3)">Instances</div><div style="font-weight:700;color:var(--green)">Auto</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">Exec/min</div><div style="font-weight:700">2,140</div></div>
+              <div><div style="font-size:10px;color:var(--text3)">Errors</div><div style="font-weight:700">0.05%</div></div>
+            </div>
+            <button class="btn btn-outline btn-sm" style="width:100%">View Details</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLO -->
+      <div class="page" id="page-slo">
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-title">Service Level Objectives — 30 Day Window</div>
+            <div id="sloRows"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Error Budget Status</div>
+            <div style="display:flex;flex-direction:column;gap:14px" id="budgetRows"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">SLO Compliance History (12 weeks)</div>
+          <canvas id="sloCanvas" style="width:100%;height:120px"></canvas>
+        </div>
+      </div>
+
+      <!-- RUNBOOKS -->
+      <div class="page" id="page-runbooks">
+        <div class="alert-banner warn" style="margin-bottom:20px">
+          <span class="alert-icon">🤖</span>
+          <div class="alert-text">
+            <div class="alert-title">AI-generated runbook triggered for INC-2847 — HL7 Latency Spike</div>
+            <div class="alert-sub">Generated 3 min ago · Confidence: 87% · Based on 14 historical incidents</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span class="tag ai">AI-Generated</span> &nbsp;RB-114: HL7 Processor High Latency</div>
+            <div class="timeline" style="margin-top:4px">
+              <div class="rb-step">
+                <div class="rb-num">1</div>
+                <div class="rb-body">
+                  <div class="rb-title">Check pod CPU saturation</div>
+                  <div class="rb-desc">Identify if the latency spike is caused by CPU throttling on AKS pods.</div>
+                  <div class="rb-cmd">kubectl top pods -n hl7-processor --sort-by=cpu</div>
+                </div>
+              </div>
+              <div class="rb-step">
+                <div class="rb-num">2</div>
+                <div class="rb-body">
+                  <div class="rb-title">Review recent config changes</div>
+                  <div class="rb-desc">Check if a ConfigMap or Deployment change was pushed in the last 60 minutes.</div>
+                  <div class="rb-cmd">kubectl rollout history deployment/hl7-processor -n hl7-processor</div>
+                </div>
+              </div>
+              <div class="rb-step">
+                <div class="rb-num">3</div>
+                <div class="rb-body">
+                  <div class="rb-title">Restart degraded pod</div>
+                  <div class="rb-desc">If pod CPU > 90% and no recent config change, restart the highest-CPU pod.</div>
+                  <div class="rb-cmd">kubectl delete pod hl7-processor-east-3 -n hl7-processor</div>
+                </div>
+              </div>
+              <div class="rb-step">
+                <div class="rb-num">4</div>
+                <div class="rb-body">
+                  <div class="rb-title">Scale out if not recovering</div>
+                  <div class="rb-desc">If latency doesn't improve within 3 min post-restart, scale the deployment.</div>
+                  <div class="rb-cmd">kubectl scale deployment hl7-processor --replicas=6 -n hl7-processor</div>
+                </div>
+              </div>
+              <div class="rb-step">
+                <div class="rb-num">5</div>
+                <div class="rb-body">
+                  <div class="rb-title">Validate recovery & update incident</div>
+                  <div class="rb-desc">Confirm latency p99 drops below 200ms in Datadog. Update INC-2847 with findings and close if resolved.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Runbook Library</div>
+            <table>
+              <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Last Used</th></tr></thead>
+              <tbody>
+                <tr><td>RB-114</td><td>HL7 High Latency Response</td><td><span class="tag ai">AI</span></td><td>Now</td></tr>
+                <tr><td>RB-108</td><td>AKS Node Not Ready</td><td><span class="tag ai">AI</span></td><td>3d ago</td></tr>
+                <tr><td>RB-097</td><td>Database Connection Pool Exhausted</td><td><span class="tag ok">Manual</span></td><td>1w ago</td></tr>
+                <tr><td>RB-091</td><td>Vendor Gateway Timeout Recovery</td><td><span class="tag ai">AI</span></td><td>2w ago</td></tr>
+                <tr><td>RB-085</td><td>Auth Service Certificate Renewal</td><td><span class="tag ok">Manual</span></td><td>1mo ago</td></tr>
+                <tr><td>RB-072</td><td>Disk Pressure on AKS Nodes</td><td><span class="tag ai">AI</span></td><td>2mo ago</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOGS -->
+      <div class="page" id="page-logs">
+        <div class="card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Live Log Stream</div>
+              <div class="section-sub">HL7 Processor · Filtered: ERROR + WARN</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm" id="pauseBtn">⏸ Pause</button>
+              <button class="btn btn-outline btn-sm">Filter</button>
+            </div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;height:360px;overflow-y:auto;font-family:'JetBrains Mono',monospace" id="logStream"></div>
+        </div>
+      </div>
+
+      <!-- AI ASSISTANT -->
+      <div class="page" id="page-ai">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span class="tag ai">AI</span> &nbsp;Ops Assistant</div>
+            <div class="chat-wrap">
+              <div class="chat-history" id="chatHistory">
+                <div class="chat-msg">
+                  <div class="chat-avatar ai">AI</div>
+                  <div class="chat-bubble">Hi — I'm your AI Ops Assistant. I have context on all active incidents, service health, SLOs, and recent deployments.<br><br>What do you need right now?</div>
+                </div>
+              </div>
+              <div class="quick-chips">
+                <span class="chip" onclick="sendChip(this)">What's causing INC-2847?</span>
+                <span class="chip" onclick="sendChip(this)">Which SLOs are at risk?</span>
+                <span class="chip" onclick="sendChip(this)">Should we roll back?</span>
+                <span class="chip" onclick="sendChip(this)">Show error budget status</span>
+              </div>
+              <div class="chat-input-row">
+                <input class="chat-input" id="aiInput" placeholder="Ask about incidents, services, SLOs…" />
+                <button class="btn btn-primary" onclick="sendAI()">Send</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">AI Insights — Auto-generated</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="background:var(--red-bg);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:12px">
+                <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:4px">🔴 Root Cause Hypothesis</div>
+                <div style="font-size:12px;color:var(--text2);line-height:1.6">Config change at 14:20 UTC increased JVM heap allocation for hl7-processor, causing GC pause storms. Pod CPU saturated at 94%. 87% confidence based on 14 similar past incidents.</div>
+              </div>
+              <div style="background:var(--amber-bg);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:12px">
+                <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:4px">⚠️ SLO Risk Alert</div>
+                <div style="font-size:12px;color:var(--text2);line-height:1.6">HL7 Processor is burning error budget at 3× nominal rate. At current rate, monthly budget will be exhausted in ~4.2 hours. Recommend immediate action.</div>
+              </div>
+              <div style="background:var(--cyan-bg);border:1px solid rgba(6,182,212,0.25);border-radius:8px;padding:12px">
+                <div style="font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:4px">💡 Recommended Action</div>
+                <div style="font-size:12px;color:var(--text2);line-height:1.6">Run Runbook RB-114 step 2 first — roll back the 14:20 config change. Probability of resolution without pod restart: 72%.</div>
+              </div>
+              <div style="background:var(--green-bg);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:12px">
+                <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:4px">✅ Unrelated Services Nominal</div>
+                <div style="font-size:12px;color:var(--text2);line-height:1.6">Patient Data API, Auth Service, Scheduling Engine and Reporting Service all within SLO. Blast radius is contained to HL7 and Vendor Gateway.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toUTCString().slice(17,25) + ' UTC';
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// Navigation
+const pageMeta = {
+  dashboard: 'Operations Dashboard',
+  incidents: 'Incident Management',
+  services: 'Service Catalog',
+  slo: 'SLOs & Error Budgets',
+  runbooks: 'AI Runbooks',
+  logs: 'Log Stream',
+  ai: 'AI Ops Assistant'
+};
+function goTo(page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const btn = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('pageTitle').textContent = pageMeta[page] || page;
+  if (page === 'slo') renderSLO();
+  if (page === 'logs') startLogs();
+}
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => goTo(btn.dataset.page));
+});
+
+// Dashboard Canvas
+(function drawReqChart() {
+  const canvas = document.getElementById('reqCanvas');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.offsetWidth || 400;
+  const H = 140;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const data = [820,940,1200,1450,1680,2100,2480,2840,2650,2200,1900,1640,1420,1200,1050,980,1100,1320,1580,1840,2020,2200,1980,1720];
+  const pad = { t:10, r:10, b:24, l:40 };
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+  const min = 0, max = 3000;
+  const x = i => pad.l + (i / (data.length-1)) * cw;
+  const y = v => pad.t + ch - ((v - min) / (max - min)) * ch;
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
+  [0,1000,2000,3000].forEach(v => {
+    ctx.beginPath(); ctx.moveTo(pad.l, y(v)); ctx.lineTo(pad.l+cw, y(v)); ctx.stroke();
+    ctx.fillStyle = '#6e7681'; ctx.font = '10px Inter'; ctx.textAlign = 'right';
+    ctx.fillText(v===0?'0':v===1000?'1k':v===2000?'2k':'3k', pad.l-6, y(v)+3);
+  });
+  // fill
+  const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t+ch);
+  grad.addColorStop(0, 'rgba(37,99,235,0.3)');
+  grad.addColorStop(1, 'rgba(37,99,235,0)');
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(data[0]));
+  data.forEach((v,i) => ctx.lineTo(x(i), y(v)));
+  ctx.lineTo(x(data.length-1), y(min)); ctx.lineTo(x(0), y(min));
+  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+  // line
+  ctx.beginPath(); ctx.moveTo(x(0), y(data[0]));
+  data.forEach((v,i) => ctx.lineTo(x(i), y(v)));
+  ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.stroke();
+  // incident mark
+  ctx.fillStyle = 'rgba(239,68,68,0.8)';
+  ctx.beginPath(); ctx.arc(x(20), y(data[20]), 5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ef4444'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
+  ctx.fillText('P1', x(20), y(data[20])-10);
+  // x labels
+  ctx.fillStyle = '#6e7681'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
+  ['00','04','08','12','16','20','24'].forEach((h,i) => {
+    ctx.fillText(h+'h', pad.l + (i/6)*cw, H-6);
+  });
+})();
+
+// SLO page
+const sloData = [
+  { name: 'HL7 Processor Availability', target: 99.9, actual: 99.71, budget: 31 },
+  { name: 'Patient Data API P99 < 200ms', target: 99.5, actual: 99.82, budget: 84 },
+  { name: 'Auth Service Availability', target: 99.99, actual: 99.99, budget: 96 },
+  { name: 'Scheduling Engine P95 < 150ms', target: 99.0, actual: 99.44, budget: 78 },
+  { name: 'Vendor Integration Uptime', target: 99.5, actual: 98.92, budget: 12 },
+];
+function renderSLO() {
+  const sloRows = document.getElementById('sloRows');
+  sloRows.innerHTML = sloData.map(s => {
+    const ok = s.actual >= s.target;
+    const color = ok ? 'var(--green)' : 'var(--red)';
+    const pct = Math.min(100, (s.actual / s.target) * 100);
+    return `<div class="slo-row">
+      <div class="slo-name">${s.name.split(' ').slice(0,2).join(' ')}</div>
+      <div class="slo-track"><div class="slo-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="slo-val" style="color:${color}">${s.actual}%</div>
+      <div class="slo-budget">${s.budget}% left</div>
+    </div>`;
+  }).join('');
+
+  const budgetRows = document.getElementById('budgetRows');
+  budgetRows.innerHTML = sloData.map(s => {
+    const color = s.budget > 50 ? 'var(--green)' : s.budget > 20 ? 'var(--amber)' : 'var(--red)';
+    return `<div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--text2)">${s.name.split(' ').slice(0,3).join(' ')}</span>
+        <span style="font-size:12px;font-weight:700;color:${color}">${s.budget}%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${s.budget}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+
+  // SLO canvas
+  const canvas = document.getElementById('sloCanvas');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.offsetWidth || 600;
+  const H = 120;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const weeks = ['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'];
+  const vals = [99.97,99.95,99.98,99.94,99.99,99.96,99.91,99.93,99.99,99.97,99.88,99.71];
+  const pad = {t:10,r:10,b:20,l:40};
+  const cw = W-pad.l-pad.r, ch = H-pad.t-pad.b;
+  const min=99.6, max=100;
+  const x = i => pad.l + (i/(vals.length-1))*cw;
+  const y = v => pad.t + ch - ((v-min)/(max-min))*ch;
+  // target line
+  ctx.setLineDash([4,3]);
+  ctx.strokeStyle='rgba(239,68,68,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad.l,y(99.9)); ctx.lineTo(pad.l+cw,y(99.9)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#ef4444'; ctx.font='9px Inter'; ctx.textAlign='left';
+  ctx.fillText('SLO 99.9%', pad.l+4, y(99.9)-3);
+  // fill
+  const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+  grad.addColorStop(0,'rgba(34,197,94,0.25)'); grad.addColorStop(1,'rgba(34,197,94,0)');
+  ctx.beginPath(); ctx.moveTo(x(0),y(vals[0]));
+  vals.forEach((v,i)=>ctx.lineTo(x(i),y(v)));
+  ctx.lineTo(x(vals.length-1),y(min)); ctx.lineTo(x(0),y(min));
+  ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+  // line
+  ctx.beginPath(); ctx.moveTo(x(0),y(vals[0]));
+  vals.forEach((v,i)=>ctx.lineTo(x(i),y(v)));
+  ctx.strokeStyle='#22c55e'; ctx.lineWidth=2; ctx.stroke();
+  // labels
+  ctx.fillStyle='#6e7681'; ctx.font='9px Inter'; ctx.textAlign='center';
+  weeks.forEach((w,i)=>ctx.fillText(w,x(i),H-4));
+}
+
+// Logs
+const logMessages = [
+  ['INFO','HL7MessageConsumer','Consumed 142 messages from queue — batch processed in 84ms'],
+  ['INFO','PodHealthCheck','Pod hl7-processor-east-1 health check passed'],
+  ['WARN','GCMonitor','GC pause detected: 320ms on hl7-processor-east-3 (heap: 78%)'],
+  ['ERROR','HL7MessageConsumer','Processing timeout after 1200ms — message ID: HL7-8821-CC'],
+  ['WARN','CPUThrottle','CPU throttle event on hl7-processor-east-3: 94% utilization'],
+  ['ERROR','VendorGateway','Connection timeout to vendor endpoint: rhapsody-east.pcc.internal'],
+  ['INFO','KubeController','Deployment hl7-processor revision 8 — 3/5 replicas ready'],
+  ['WARN','ErrorBudget','SLO burn rate: 3.2x nominal — HL7 Processor availability budget at 31%'],
+  ['ERROR','HL7MessageConsumer','Dead letter queue depth: 214 messages — alert DA-8821 triggered'],
+  ['INFO','PodHealthCheck','Restarting pod hl7-processor-east-3 per runbook RB-114 step 3'],
+  ['INFO','KubeController','Pod hl7-processor-east-3 terminated and rescheduled'],
+  ['WARN','GCMonitor','GC pause: 180ms on hl7-processor-east-2 — monitoring'],
+  ['INFO','HL7MessageConsumer','Queue depth recovering: 214 → 108 pending messages'],
+];
+let logInterval = null;
+let logPaused = false;
+let logIdx = 0;
+function startLogs() {
+  const stream = document.getElementById('logStream');
+  if (!stream) return;
+  if (logInterval) return;
+  logInterval = setInterval(() => {
+    if (logPaused) return;
+    const now = new Date();
+    const ts = now.toUTCString().slice(17,25);
+    const msg = logMessages[logIdx % logMessages.length]; logIdx++;
+    const div = document.createElement('div');
+    div.className = 'log-line';
+    const levelColor = msg[0]==='ERROR'?'var(--red)':msg[0]==='WARN'?'var(--amber)':'var(--cyan)';
+    div.innerHTML = `<span class="log-ts">${ts}</span><span class="log-level ${msg[0]}" style="color:${levelColor}">${msg[0]}</span><span class="log-msg">[${msg[1]}] ${msg[2]}</span>`;
+    stream.appendChild(div);
+    stream.scrollTop = stream.scrollHeight;
+    if (stream.children.length > 80) stream.removeChild(stream.firstChild);
+  }, 800);
+  document.getElementById('pauseBtn').addEventListener('click', () => {
+    logPaused = !logPaused;
+    document.getElementById('pauseBtn').textContent = logPaused ? '▶ Resume' : '⏸ Pause';
+  });
+}
+
+// AI chat
+const aiResponses = {
+  'inc-2847': {
+    answer: `Based on correlated signals across logs, metrics and recent deployments, the most likely cause is the config change deployed at 14:20 UTC.<br><br>That change increased JVM heap allocation for the HL7 processor. At high queue depths, this is causing GC pause storms — spikes up to 320ms — which cascade into message processing timeouts. Pod hl7-processor-east-3 is running at 94% CPU.<br><br><strong>Recommended next step:</strong> Roll back the 14:20 config change before restarting the pod. Probability of resolution: 72%.`
+  },
+  'slo': {
+    answer: `Two SLOs are currently at risk:<br><br>🔴 <strong>HL7 Processor Availability</strong> — actual 99.71% vs 99.9% target. Only 31% of monthly error budget remaining. Burning at 3× nominal rate.<br><br>🔴 <strong>Vendor Integration Uptime</strong> — actual 98.92% vs 99.5% target. Only 12% budget left — effectively in breach.<br><br>All other SLOs are healthy. Immediate action needed on both.`
+  },
+  'rollback': {
+    answer: `Yes, I recommend a rollback of the 14:20 UTC config change on hl7-processor.<br><br>Evidence: Latency spike began 12 minutes after that deploy. GC pause pattern matches the heap config change. No other deployments or infra changes in that window.<br><br>Command:<br><code style="font-family:monospace;color:var(--cyan);font-size:11px">kubectl rollout undo deployment/hl7-processor -n hl7-processor</code><br><br>Monitor latency p99 in Datadog for 3 minutes post-rollback.`
+  },
+  'budget': {
+    answer: `Current error budget status:<br><br>📉 <strong>HL7 Processor</strong> — 31% remaining (burning fast)<br>📉 <strong>Vendor Integration</strong> — 12% remaining (critical)<br>✅ <strong>Patient Data API</strong> — 84% remaining<br>✅ <strong>Auth Service</strong> — 96% remaining<br>✅ <strong>Scheduling Engine</strong> — 78% remaining<br><br>At the current burn rate, HL7 budget will be exhausted in ~4.2 hours without intervention.`
+  },
+  fallback: {
+    answer: `I can help with that. Based on current system state, I'm monitoring 2 active incidents, 6 services, and 5 SLOs. Could you be more specific? For example: ask about a specific incident, service health, SLO status, or runbook recommendation.`
+  }
+};
+function getAIResponse(input) {
+  const l = input.toLowerCase();
+  if (l.includes('2847') || l.includes('causing') || l.includes('root cause') || l.includes('hl7')) return aiResponses['inc-2847'];
+  if (l.includes('slo') || l.includes('at risk') || l.includes('service level')) return aiResponses['slo'];
+  if (l.includes('roll') || l.includes('rollback') || l.includes('revert')) return aiResponses['rollback'];
+  if (l.includes('budget') || l.includes('error budget')) return aiResponses['budget'];
+  return aiResponses['fallback'];
+}
+function sendAI() {
+  const input = document.getElementById('aiInput');
+  const val = input.value.trim();
+  if (!val) return;
+  appendMsg(val, 'user');
+  input.value = '';
+  setTimeout(() => {
+    const r = getAIResponse(val);
+    appendMsg(r.answer, 'ai');
+  }, 900);
+}
+function sendChip(el) {
+  const val = el.textContent;
+  appendMsg(val, 'user');
+  setTimeout(() => {
+    const r = getAIResponse(val);
+    appendMsg(r.answer, 'ai');
+  }, 900);
+}
+function appendMsg(text, who) {
+  const hist = document.getElementById('chatHistory');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${who}`;
+  div.innerHTML = `<div class="chat-avatar ${who}">${who==='ai'?'AI':'JP'}</div><div class="chat-bubble">${text}</div>`;
+  hist.appendChild(div);
+  hist.scrollTop = hist.scrollHeight;
+}
+document.getElementById('aiInput').addEventListener('keydown', e => { if (e.key==='Enter') sendAI(); });
+
+// Resolve incident button
+document.getElementById('resolveBtn').addEventListener('click', () => {
+  const btn = document.getElementById('resolveBtn');
+  btn.textContent = '✓ Resolved';
+  btn.style.background = 'var(--green)';
+  btn.disabled = true;
+  document.querySelector('.alert-banner.incident').style.display = 'none';
+  const badge = document.querySelector('.nav-badge');
+  if (badge) badge.textContent = '1';
+  // Add timeline item
+  const tl = document.getElementById('incTimeline');
+  const item = document.createElement('div');
+  item.className = 'tl-item';
+  const now = new Date();
+  const ts = now.toUTCString().slice(17,25);
+  item.innerHTML = `<div class="tl-dot" style="background:var(--green)"></div><div class="tl-body"><div class="tl-time">${ts} UTC</div><div class="tl-event">✅ Incident resolved — latency recovered to 87ms p99</div><div class="tl-actor">Jaivik Parekh</div></div>`;
+  tl.appendChild(item);
+});
+</script>
